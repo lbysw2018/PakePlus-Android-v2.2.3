@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课堂英语填空训练系统</title>
+    <style>
+        :root {
+            --main-color: #2c3e50;
+            --hover-color: #1a2b3c;
+            --bg-color: #f0f3f5;
+            --text-size: 2.8rem;
+            --answer-color: #1a73e8;
+            --success-color: #27ae60;
+            --warning-color: #e67e22;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "微软雅黑", Arial, sans-serif;
+            background: var(--bg-color);
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            padding: 20px;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            color: var(--main-color);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.5rem;
+            color: #666;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .exercise-area {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .translation {
+            font-size: 2rem;
+            color: #666;
+            text-align: center;
+            padding: 25px;
+            background: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sentence-container {
+            font-size: var(--text-size);
+            line-height: 1.8;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            min-height: 250px;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 150px;
+            margin: 0 10px;
+            position: relative;
+            transition: all 0.3s;
+            vertical-align: middle;
+        }
+
+        .blank-space {
+            display: inline-block;
+            min-width: 150px;
+            height: 1.5em;
+            border-bottom: 4px solid var(--main-color);
+            vertical-align: bottom;
+        }
+
+        .answer {
+            opacity: 0;
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--main-color);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            pointer-events: none;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .blank:hover .answer {
+            opacity: 1;
+            top: -60px;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            background: var(--bg-color);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls button {
+            font-size: 1.8rem;
+            padding: 20px 35px;
+            margin: 0 10px;
+            border-radius: 15px;
+            min-width: 180px;
+            background: var(--main-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls button:hover {
+            background: var(--hover-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .controls button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 小按钮样式 */
+        .small-button {
+            font-size: 1.5rem !important;
+            padding: 15px 25px !important;
+            min-width: 150px !important;
+        }
+
+        .nav-button {
+            min-width: 180px !important;
+        }
+
+        .counter {
+            font-size: 1.8rem;
+            margin: 0 15px;
+            background: var(--main-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            min-width: 120px;
+            display: inline-block;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .import-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+        }
+
+        .import-section h2 {
+            font-size: 2.2rem;
+            color: var(--main-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #batchInput {
+            width: 100%;
+            height: 150px;
+            font-size: 1.5rem;
+            padding: 20px;
+            border: 3px dashed var(--main-color);
+            border-radius: 15px;
+            margin: 20px 0;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .file-input-container {
+            display: inline-block;
+            margin: 10px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 20px 35px;
+            background: var(--main-color);
+            color: white;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1.8rem;
+            transition: background 0.3s;
+            min-width: 200px;
+            margin: 0 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-input-label:hover {
+            background: var(--hover-color);
+        }
+
+        .import-info {
+            text-align: center;
+            font-size: 1.4rem;
+            color: #666;
+            margin-top: 15px;
+            padding: 0 20px;
+        }
+
+        .import-format {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 1.4rem;
+        }
+
+        .import-format pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-top: 10px;
+            font-size: 1.3rem;
+        }
+
+        /* 答案显示样式 */
+        .show-answers .blank-space {
+            display: none !important;
+        }
+
+        .show-answers .answer {
+            opacity: 1 !important;
+            position: static !important;
+            background: transparent !important;
+            color: var(--answer-color) !important;
+            display: inline !important;
+            padding: 0 5px;
+            font-size: var(--text-size);
+            font-weight: bold;
+            border-bottom: none !important;
+            transform: none !important;
+        }
+
+        /* 动画效果 */
+        @keyframes pulseFocus {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+                background: #f1c40f22;
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* 全屏模式 */
+        .fullscreen .sentence-container {
+            font-size: 4rem;
+            padding: 60px;
+            margin: 5vh auto;
+        }
+
+        .fullscreen .translation {
+            font-size: 2.8rem;
+            padding: 40px;
+        }
+
+        /* 打印样式 */
+        @media print {
+            body {
+                padding: 0 !important;
+                font-size: 28pt !important;
+            }
+
+            .header,
+            .controls,
+            .import-section {
+                display: none !important;
+            }
+
+            .exercise-area {
+                margin-bottom: 0;
+            }
+
+            .sentence-container {
+                box-shadow: none;
+                border: 2px solid #000;
+                page-break-inside: avoid;
+                margin: 20px auto;
+            }
+
+            .answer {
+                opacity: 1 !important;
+                position: static !important;
+                background: transparent !important;
+                color: #000 !important;
+                display: inline !important;
+            }
+
+            .blank-space {
+                display: none !important;
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            :root {
+                --text-size: 2.2rem;
+            }
+            
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .controls button {
+                font-size: 1.5rem;
+                padding: 15px 25px;
+                min-width: 150px;
+                margin: 5px;
+            }
+            
+            .file-input-label {
+                font-size: 1.5rem;
+                padding: 15px 25px;
+                min-width: 150px;
+            }
+            
+            .counter {
+                font-size: 1.5rem;
+                padding: 8px 15px;
+                min-width: 100px;
+            }
+            
+            .sentence-container {
+                padding: 25px;
+            }
+            
+            .blank {
+                min-width: 120px;
+            }
+            
+            .blank-space {
+                min-width: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            :root {
+                --text-size: 1.8rem;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .translation {
+                font-size: 1.6rem;
+                padding: 15px;
+            }
+            
+            .controls button {
+                font-size: 1.2rem;
+                padding: 12px 20px;
+                min-width: 120px;
+            }
+            
+            .file-input-label {
+                font-size: 1.2rem;
+                padding: 12px 20px;
+                min-width: 120px;
+            }
+            
+            .button-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .blank {
+                min-width: 100px;
+                margin: 0 5px;
+            }
+            
+            .blank-space {
+                min-width: 100px;
+            }
+        }
+
+        /* 通知样式 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-size: 1.6rem;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: var(--success-color);
+        }
+
+        .notification.error {
+            background-color: #e74c3c;
+        }
+
+        .notification.warning {
+            background-color: var(--warning-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>课堂英语填空训练系统</h1>
+        <p>提高英语学习效率的智能工具</p>
+    </div>
+
+    <div class="container">
+        <div class="exercise-area">
+            <div class="translation" id="translation"></div>
+            <div class="sentence-container" id="sentence"></div>
+        </div>
+
+        <div class="controls">
+            <div class="button-row">
+                <button onclick="prevSentence()" title="上一句子" class="nav-button">◀ 上一句</button>
+                <div class="counter"><span id="current">1</span>/<span id="total">0</span></div>
+                <button onclick="nextSentence()" title="下一句子" class="nav-button">▶ 下一句</button>
+            </div>
+
+            <div class="button-row">
+                <button onclick="refreshExercise()" title="重新挖空">🎲 随机挖空</button>
+                <button onclick="toggleAnswers()" title="显示答案">📖 显示答案</button>
+                <button onclick="speakSentence()" title="朗读句子" class="small-button">🔊 朗读</button>
+                <button onclick="toggleFullscreen()" title="全屏模式" class="small-button">📺 全屏</button>
+                <button onclick="window.print()" title="生成练习纸">🖨️ 打印</button>
+            </div>
+        </div>
+
+        <div class="import-section">
+            <h2>导入句子</h2>
+            <div class="button-row">
+                <div class="file-input-container">
+                    <label for="fileInput" class="file-input-label">📄 导入TXT文件</label>
+                    <input type="file" id="fileInput" accept=".txt">
+                </div>
+                <button onclick="importSentences()" title="导入文本框内容">📚 导入文本框</button>
+            </div>
+
+            <textarea id="batchInput" placeholder="请按格式输入（一行中文，一行英文）：&#10;敏捷的棕色狐狸跳过懒狗&#10;The quick brown fox jumps over the lazy dog.&#10;熟能生巧&#10;Practice makes perfect."></textarea>
+
+            <div class="import-info">
+                支持TXT文件，格式：一行中文，一行英文 或 英文|中文
+            </div>
+
+            <div class="import-format">
+                <p>支持的格式示例：</p>
+                <pre>敏捷的棕色狐狸跳过懒狗
+The quick brown fox jumps over the lazy dog.
+熟能生巧
+Practice makes perfect.</pre>
+                <p>或</p>
+                <pre>The quick brown fox jumps over the lazy dog.|敏捷的棕色狐狸跳过懒狗
+Practice makes perfect.|熟能生巧</pre>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        const config = {
+            defaultPairs: [
+                {
+                    en: "The quick brown fox jumps over the lazy dog.",
+                    zh: "敏捷的棕色狐狸跳过懒狗"
+                },
+                {
+                    en: "Practice makes perfect.",
+                    zh: "熟能生巧"
+                },
+                {
+                    en: "Learning English is fun and rewarding.",
+                    zh: "学习英语是有趣且有益的"
+                },
+                {
+                    en: "The early bird catches the worm.",
+                    zh: "早起的鸟儿有虫吃"
+                },
+                {
+                    en: "Actions speak louder than words.",
+                    zh: "行动胜于言语"
+                },
+                {
+                    en: "Where there's a will, there's a way.",
+                    zh: "有志者事竟成"
+                }
+            ],
+            currentIndex: 0,
+            minBlanks: 1,
+            maxBlanks: 5,
+            ttsRate: 0.9
+        }
+
+        let sentenceBank = [...config.defaultPairs];
+        let currentPair = {};
+        let speech = null;
+        let showAllAnswers = false;
+
+        // 显示通知
+        function showNotification(message, type = "success") {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 分词函数
+        function tokenize(sentence) {
+            return sentence.split(/([\u4e00-\u9fa5])|([.,!?;])|\s+/g)
+                .filter(x => x && x.trim() !== "");
+        }
+
+        // 计算需要挖空的数量
+        function calculateBlanks(sentence) {
+            const words = tokenize(sentence);
+            const validWords = words.filter(word => !/[.,!?;]/.test(word));
+            const length = validWords.length;
+
+            if (length <= 3) return 1;
+            if (length <= 6) return 2;
+            if (length <= 10) return 3;
+            if (length <= 15) return 4;
+            return 5;
+        }
+
+        // 生成练习
+        function generateExercise() {
+            if (!currentPair.en) return;
+
+            const words = tokenize(currentPair.en);
+            const blanksCount = calculateBlanks(currentPair.en);
+            const blankIndices = new Set();
+
+            // 获取可以挖空的单词索引
+            const availableIndices = [];
+            words.forEach((word, index) => {
+                if (!/[.,!?;]/.test(word) && word.trim()) {
+                    availableIndices.push(index);
+                }
+            });
+
+            // 随机选择要挖空的索引
+            while (blankIndices.size < Math.min(blanksCount, availableIndices.length)) {
+                const randomIdx = Math.floor(Math.random() * availableIndices.length);
+                blankIndices.add(availableIndices[randomIdx]);
+            }
+
+            const container = document.getElementById('sentence');
+            container.innerHTML = words.map((word, index) => {
+                if (blankIndices.has(index)) {
+                    // 使用空白区域代替单词，显示下划线
+                    return `<span class="blank"><span class="blank-space"></span><span class="answer">${word}</span></span>`;
+                } else {
+                    return `<span>${word}</span>`;
+                }
+            }).join(' ');
+
+            // 添加动画效果
+            document.querySelectorAll('.blank').forEach(blank => {
+                blank.style.animation = 'pulseFocus 1.5s ease-out';
+            });
+            
+            // 添加淡入效果
+            container.classList.add('fade-in');
+            setTimeout(() => {
+                container.classList.remove('fade-in');
+            }, 500);
+        }
+
+        // 朗读句子
+        function speakSentence() {
+            if ('speechSynthesis' in window) {
+                if (speech) window.speechSynthesis.cancel();
+                speech = new SpeechSynthesisUtterance(currentPair.en);
+                speech.rate = config.ttsRate;
+                window.speechSynthesis.speak(speech);
+            } else {
+                showNotification('您的浏览器不支持语音合成功能', 'error');
+            }
+        }
+
+        // 切换全屏模式
+        function toggleFullscreen() {
+            document.body.classList.toggle('fullscreen');
+            if (document.body.classList.contains('fullscreen')) {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // 导入句子
+        function importSentences() {
+            const input = document.getElementById('batchInput').value;
+            const lines = input.split('\n').filter(line => line.trim() !== '');
+            const newPairs = [];
+
+            // 解析格式：一句中文，一句英文
+            for (let i = 0; i < lines.length; i += 2) {
+                if (i + 1 < lines.length) {
+                    const zh = lines[i].trim();
+                    const en = lines[i + 1].trim();
+                    if (zh && en) {
+                        newPairs.push({ en, zh });
+                    }
+                }
+            }
+
+            // 尝试解析英文|中文格式
+            if (newPairs.length === 0) {
+                for (const line of lines) {
+                    if (line.includes('|')) {
+                        const [en, zh] = line.split('|').map(part => part.trim());
+                        if (en && zh) {
+                            newPairs.push({ en, zh });
+                        }
+                    }
+                }
+            }
+
+            if (newPairs.length > 0) {
+                sentenceBank = [...new Set([...sentenceBank, ...newPairs])];
+                config.currentIndex = sentenceBank.length - 1;
+                currentPair = sentenceBank[config.currentIndex];
+                updateDisplay();
+                showNotification(`成功导入 ${newPairs.length} 对句子，当前总数：${sentenceBank.length}`);
+            } else {
+                showNotification('没有找到有效的句子对，请确保格式为：一行中文，一行英文 或 英文|中文', 'error');
+            }
+        }
+
+        // 处理文件导入
+        function handleFileImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const content = e.target.result;
+                // 解析文本内容
+                const lines = content.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line !== '');
+
+                const newPairs = [];
+
+                // 解析格式：一行中文，一行英文
+                for (let i = 0; i < lines.length; i += 2) {
+                    if (i + 1 < lines.length) {
+                        const zh = lines[i].trim();
+                        const en = lines[i + 1].trim();
+
+                        // 确保是有效的中英文句子
+                        if (zh && en &&
+                            zh.match(/[\u4e00-\u9fa5]/) &&
+                            en.match(/[a-zA-Z]/)) {
+                            newPairs.push({ en, zh });
+                        }
+                    }
+                }
+
+                // 尝试解析英文|中文格式
+                if (newPairs.length === 0) {
+                    for (const line of lines) {
+                        if (line.includes('|')) {
+                            const [en, zh] = line.split('|').map(part => part.trim());
+                            if (en && zh) {
+                                newPairs.push({ en, zh });
+                            }
+                        }
+                    }
+                }
+
+                if (newPairs.length > 0) {
+                    sentenceBank = [...new Set([...sentenceBank, ...newPairs])];
+                    config.currentIndex = sentenceBank.length - 1;
+                    currentPair = sentenceBank[config.currentIndex];
+                    updateDisplay();
+
+                    // 更新文本框内容，方便用户查看和编辑
+                    document.getElementById('batchInput').value = newPairs.map(pair =>
+                        `${pair.zh}\n${pair.en}`
+                    ).join('\n');
+
+                    showNotification(`成功从文件导入 ${newPairs.length} 对句子，当前总数：${sentenceBank.length}`);
+                } else {
+                    showNotification('无法从文件中提取句子对，请确保文件格式为：一行中文，一行英文 或 英文|中文', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 更新显示
+        function updateDisplay() {
+            document.getElementById('translation').textContent = currentPair.zh || "";
+            generateExercise();
+            updateCounter();
+        }
+
+        // 更新计数器
+        function updateCounter() {
+            document.getElementById('current').textContent = config.currentIndex + 1;
+            document.getElementById('total').textContent = sentenceBank.length;
+        }
+
+        // 上一句
+        function prevSentence() {
+            config.currentIndex = (config.currentIndex - 1 + sentenceBank.length) % sentenceBank.length;
+            currentPair = sentenceBank[config.currentIndex];
+            updateDisplay();
+        }
+
+        // 下一句
+        function nextSentence() {
+            config.currentIndex = (config.currentIndex + 1) % sentenceBank.length;
+            currentPair = sentenceBank[config.currentIndex];
+            updateDisplay();
+        }
+
+        // 刷新练习
+        function refreshExercise() {
+            generateExercise();
+        }
+
+        // 切换答案显示
+        function toggleAnswers() {
+            showAllAnswers = !showAllAnswers;
+            const container = document.getElementById('sentence');
+            container.classList.toggle('show-answers', showAllAnswers);
+            
+            if (showAllAnswers) {
+                showNotification('答案已显示', 'warning');
+            } else {
+                showNotification('答案已隐藏');
+            }
+        }
+
+        // 初始化
+        function init() {
+            currentPair = sentenceBank[0] || {};
+            updateDisplay();
+
+            // 添加文件导入事件监听
+            document.getElementById('fileInput').addEventListener('change', handleFileImport);
+
+            // 键盘快捷键
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') nextSentence();
+                if (e.key === 'ArrowLeft') prevSentence();
+                if (e.key === ' ') refreshExercise();
+                if (e.key === 'Enter') speakSentence();
+                if (e.key === 'a' || e.key === 'A') toggleAnswers();
+            });
+            
+            showNotification('系统已加载完成，可以使用键盘快捷键：左右箭头切换句子，空格重新挖空，Enter朗读句子，A显示/隐藏答案');
+        }
+
+        // 页面加载完成后初始化
+        window.onload = init;
+    </script>
+</body>
+</html>
